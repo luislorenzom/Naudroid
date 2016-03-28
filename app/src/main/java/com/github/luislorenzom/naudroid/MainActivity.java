@@ -6,9 +6,12 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.github.luislorenzom.naudroid.client.FileUtilities;
+import com.github.luislorenzom.naudroid.client.KeyContainer;
 import com.github.luislorenzom.naudroid.config.NaudroidPreferences;
 import com.github.luislorenzom.naudroid.config.dao.PreferencesDao;
 import com.github.luislorenzom.naudroid.config.dao.model.QuotesDataSource;
+import com.github.luislorenzom.naudroid.util.Constants;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -24,24 +27,6 @@ public class MainActivity extends ActionBarActivity {
         try {
             //Crear nuevo objeto QuotesDataSource
             QuotesDataSource dataSource = new QuotesDataSource(this);
-
-            //boolean exist = new File("/data/data/com.github.luislorenzom.naudroid/databases/NaudroidDataBase.db").exists();
-            //Log.e("exist", String.valueOf(exist));
-
-            /*PreferencesDao preferecesDao = new PreferencesDao(this);
-
-            List<String> servers = new ArrayList<>();
-            servers.add("192.168.1.57");
-            NaudroidPreferences newPrefereces = new NaudroidPreferences("/data/data/naudroidFiles1", "/data/data/naudroidKeys2", servers);
-
-            preferecesDao.updatePreferences(newPrefereces);
-
-            NaudroidPreferences prefereces = preferecesDao.getPreference();
-
-            Log.e("preferences", prefereces.getSaveFilesPath());
-            Log.e("preferences", prefereces.getSaveKeysPath());
-            Log.e("preferences", String.valueOf(prefereces.getServerPreferences().size()));
-            Log.e("preferences", prefereces.getServerPreferences().get(0));*/
 
         } catch (Exception e) {
            Log.e("errorTag",Log.getStackTraceString(e));

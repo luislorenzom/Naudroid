@@ -52,7 +52,7 @@ public class PreferencesDao {
     }
 
     /*********************/
-    /* Private functions */
+    /* PRIVATE FUNCTIONS */
     /*********************/
 
     /*-------- OPERACIONES SERVER_PREFERENCES ------------*/
