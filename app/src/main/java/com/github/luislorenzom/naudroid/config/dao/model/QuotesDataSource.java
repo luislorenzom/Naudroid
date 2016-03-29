@@ -12,6 +12,7 @@ public class QuotesDataSource {
     // Nombre de las tablas
     public static final String PREFERENCES_TABLE_NAME = "Preferences";
     public static final String SERVER_PREFERENCES_TABLE_NAME = "ServerPreferences";
+    public static final String RSA_KEYS_TABLE_NAME = "RSAKeys";
 
     // Tipos de los campos
     public static final String STRING_TYPE = "text";
@@ -42,6 +43,13 @@ public class QuotesDataSource {
         public static final String SERVER_IP = "server_ip";
     }
 
+    // Campos de la tabla RSAKeys
+    public static class ColumnRSAKeys {
+        public static final String KEY_PAIR_ID = BaseColumns._ID;
+        public static final String PUBLIC_KEY = "public_key";
+        public static final String PRIVATE_KEY = "private_key";
+    }
+
 
     /* ------------- Scripts de creacion -------------------- */
 
@@ -54,7 +62,13 @@ public class QuotesDataSource {
     public static final String CREATE_SERVER_PREFERENCES =
             "CREATE TABLE " + SERVER_PREFERENCES_TABLE_NAME + "(" +
                     ColumnServerPreferences.SERVER_ID + " " + INT_TYPE + " PRIMARY KEY AUTOINCREMENT," +
-                    ColumnServerPreferences.SERVER_IP + " " + STRING_TYPE + " NOT NULL)" ;
+                    ColumnServerPreferences.SERVER_IP + " " + STRING_TYPE + " NOT NULL)";
+
+    public static final String CREATE_KEYPAIR_PREFERENCES =
+            "CREATE TABLE " + RSA_KEYS_TABLE_NAME + "(" +
+                    ColumnRSAKeys.KEY_PAIR_ID + " " + INT_TYPE + " PRIMARY KEY AUTOINCREMENT," +
+                    ColumnRSAKeys.PUBLIC_KEY + " " + STRING_TYPE + " NOT NULL," +
+                    ColumnRSAKeys.PRIVATE_KEY + " " + STRING_TYPE + " NOT NULL)";
 
     /* ------------- Scripts de inicializacion -------------------- */
 

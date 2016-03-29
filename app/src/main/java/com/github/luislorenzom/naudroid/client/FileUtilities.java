@@ -1,5 +1,6 @@
 package com.github.luislorenzom.naudroid.client;
 
+import android.content.Context;
 import android.util.Base64;
 import android.util.Log;
 
@@ -28,7 +29,11 @@ import javax.crypto.spec.SecretKeySpec;
  */
 public class FileUtilities {
 
-    private RSAManager manager = new RSAManager();
+    private RSAManager manager;
+
+    FileUtilities(Context context) {
+        manager = new RSAManager(context);
+    }
 
     public void fileSplit (String filePath) throws IOException {
         // Open the file
@@ -116,7 +121,7 @@ public class FileUtilities {
         switch (algorithm) {
             case RSA:
                 // Decrypt with RSA
-                decryptWithRSA(filePath, key);
+                //decryptWithRSA(filePath, key);
                 break;
 
             case AES:
@@ -249,13 +254,11 @@ public class FileUtilities {
 
 
     private String secretKeyToString (SecretKey secretKey) {
-        //return Base64Utils.encodeToString(secretKey.getEncoded());
         return Base64.encodeToString(secretKey.getEncoded(), Base64.DEFAULT);
     }
 
 
     private SecretKey stringToSecretKey (String stringKey) {
-        //return new SecretKeySpec(Base64Utils.decodeFromString(stringKey), "AES");
         return new SecretKeySpec(Base64.decode(stringKey, Base64.DEFAULT), "AES");
     }
 }

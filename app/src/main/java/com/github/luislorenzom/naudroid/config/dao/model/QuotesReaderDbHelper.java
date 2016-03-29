@@ -21,6 +21,7 @@ public class QuotesReaderDbHelper extends SQLiteOpenHelper {
         // Creamos las tablas
         db.execSQL(QuotesDataSource.CREATE_PREFERENCES);
         db.execSQL(QuotesDataSource.CREATE_SERVER_PREFERENCES);
+        db.execSQL(QuotesDataSource.CREATE_KEYPAIR_PREFERENCES);
 
         // Insertamos los registro iniciales
         db.execSQL(QuotesDataSource.INSERT_TYPES_SCRIPT);

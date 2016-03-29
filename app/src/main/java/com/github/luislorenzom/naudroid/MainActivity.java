@@ -9,11 +9,16 @@ import android.view.MenuItem;
 import com.github.luislorenzom.naudroid.client.FileUtilities;
 import com.github.luislorenzom.naudroid.client.KeyContainer;
 import com.github.luislorenzom.naudroid.config.NaudroidPreferences;
+import com.github.luislorenzom.naudroid.config.dao.KeyPairsDao;
 import com.github.luislorenzom.naudroid.config.dao.PreferencesDao;
 import com.github.luislorenzom.naudroid.config.dao.model.QuotesDataSource;
+import com.github.luislorenzom.naudroid.config.dao.model.QuotesReaderDbHelper;
 import com.github.luislorenzom.naudroid.util.Constants;
+import com.github.luislorenzom.naudroid.util.RSAManager;
 
 import java.io.File;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,8 +31,7 @@ public class MainActivity extends ActionBarActivity {
 
         try {
             //Crear nuevo objeto QuotesDataSource
-            QuotesDataSource dataSource = new QuotesDataSource(this);
-
+            //QuotesDataSource dataSource = new QuotesDataSource(this);
         } catch (Exception e) {
            Log.e("errorTag",Log.getStackTraceString(e));
         }

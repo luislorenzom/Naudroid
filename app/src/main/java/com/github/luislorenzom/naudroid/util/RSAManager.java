@@ -1,7 +1,11 @@
 package com.github.luislorenzom.naudroid.util;
 
+import android.content.Context;
 import android.util.Base64;
 import android.util.Log;
+
+import com.github.luislorenzom.naudroid.config.dao.KeyPairTable;
+import com.github.luislorenzom.naudroid.config.dao.KeyPairsDao;
 
 import java.io.DataInputStream;
 import java.io.File;
@@ -22,6 +26,14 @@ import javax.crypto.Cipher;
  */
 public class RSAManager {
 
+    private Context context;
+    KeyPairsDao keyPairsDao;
+
+    public RSAManager(Context context) {
+        this.context = context;
+        keyPairsDao = new KeyPairsDao(context);
+    }
+
     public KeyPair generateKeys () {
         KeyPair pair = null;
         try {
@@ -30,19 +42,11 @@ public class RSAManager {
             keyGen.initialize(4096);
             KeyPair key = keyGen.generateKeyPair();
 
-            // Save the public key
-            //String stringPublicKey = Base64Utils.encodeToString(key.getPublic().getEncoded());
+            // Save the pair
             String stringPublicKey = Base64.encodeToString(key.getPublic().getEncoded(), Base64.DEFAULT);
-            PrintWriter out = new PrintWriter("public.key");
-            out.println(stringPublicKey);
-            out.close();
-
-            // Save the private key
-            //String stringPrivateKey = Base64Utils.encodeToString(key.getPrivate().getEncoded());
             String stringPrivateKey = Base64.encodeToString(key.getPrivate().getEncoded(), Base64.DEFAULT);
-            out = new PrintWriter("private.key");
-            out.println(stringPrivateKey);
-            out.close();
+            keyPairsDao.initKeyPair(stringPublicKey, stringPrivateKey);
+
             pair = key;
 
         } catch (Exception e) {
@@ -53,28 +57,30 @@ public class RSAManager {
 
 
     public PublicKey getPublicKey () {
+        PublicKey key = null;
         try {
-            return getPublicKeyFromFile("public.key");
+            // Get the public key string
+            String tmp = keyPairsDao.getKeyPair().getPublicKey();
+
+            byte[] tmpDecoded = Base64.decode(tmp, Base64.DEFAULT);
+
+            // Transform the bytes into PublicKey
+            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(tmpDecoded);
+            KeyFactory kf = KeyFactory.getInstance("RSA");
+            key = kf.generatePublic(keySpec);
+
         } catch (Exception e) {
             Log.e("errorTag", "Can't recovery the private key");
-            return null;
         }
+        return key;
     }
 
 
     public PrivateKey getPrivateKey () {
         PrivateKey key = null;
         try {
-            // Open the file and read the bytes
-            File privateKeyFile = new File("private.key");
-            FileInputStream fis = new FileInputStream(privateKeyFile);
-            DataInputStream dis = new DataInputStream(fis);
-            byte[] keyBytes = new byte[(int) privateKeyFile.length()];
-            dis.readFully(keyBytes);
-            dis.close();
-
-            // Decode the bytes
-            String tmp = new String(keyBytes);
+            // Get the private key string
+            String tmp = keyPairsDao.getKeyPair().getPrivateKey();
             //byte[] tmpDecoded = Base64Utils.decodeFromString(tmp);
             byte[] tmpDecoded = Base64.decode(tmp, Base64.DEFAULT);
 
@@ -126,30 +132,6 @@ public class RSAManager {
 
 
     public boolean existsPair() {
-        return ((new File("private.key").exists()) && (new File("public.key").exists()));
-    }
-
-
-    public PublicKey getPublicKeyFromFile(String keyPath) throws Exception {
-        PublicKey key = null;
-        // Open the file and read the bytes
-        File publicKeyFile = new File(keyPath);
-        FileInputStream fis = new FileInputStream(publicKeyFile);
-        DataInputStream dis = new DataInputStream(fis);
-        byte[] keyBytes = new byte[(int) publicKeyFile.length()];
-        dis.readFully(keyBytes);
-        dis.close();
-
-        // Decode the bytes
-        String tmp = new String(keyBytes);
-        //byte[] tmpDecoded = Base64Utils.decodeFromString(tmp);
-        byte[] tmpDecoded = Base64.decode(tmp, Base64.DEFAULT);
-
-        // Transform the bytes into PublicKey
-        X509EncodedKeySpec keySpec = new X509EncodedKeySpec(tmpDecoded);
-        KeyFactory kf = KeyFactory.getInstance("RSA");
-        key = kf.generatePublic(keySpec);
-
-        return key;
+        return (keyPairsDao.getKeyPair() != null);
     }
 }
