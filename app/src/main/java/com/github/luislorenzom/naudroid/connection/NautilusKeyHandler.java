@@ -35,7 +35,7 @@ public class NautilusKeyHandler {
     public List<NautilusKey> getKey(String keyPath) {
         List<NautilusKey> keysList = new ArrayList<NautilusKey>();
         try {
-            FileInputStream fis = context.openFileInput(keyPath);
+            FileInputStream fis = new FileInputStream(keyPath);
             InputStreamReader isr = new InputStreamReader(fis);
             char[] inputBuffer = new char[fis.available()];
             isr.read(inputBuffer);
@@ -53,50 +53,74 @@ public class NautilusKeyHandler {
             eventType = xpp.getEventType();
 
             while (eventType != XmlPullParser.END_DOCUMENT){
-                String tag = null;
 
-                String fileName = null;
-                String key = null;
-                Constants.ENCRYPT_ALG encryptAlg = null;
-                String hash = null;
-                String host = null;
-                String hostBackup = null;
+                String tag = xpp.getName();
 
-                if (eventType == XmlPullParser.START_TAG) {
+                if ((eventType == XmlPullParser.START_TAG) && (tag.equals("key"))) {
+                    String fileName = null;
+                    String key = null;
+                    Constants.ENCRYPT_ALG encryptAlg = null;
+                    String hash = null;
+                    String host = null;
+                    String hostBackup = null;
+
+                    eventType = xpp.next();
                     tag = xpp.getName();
-                }
+                    while ((eventType != XmlPullParser.END_TAG) && (!(tag.equals("key")))) {
 
-                if (eventType == XmlPullParser.TEXT) {
-                    if (tag == "fileName") {
-                        fileName = xpp.getText();
+                        if (tag.equals("fileName")) {
+                            xpp.next();
+                            fileName = xpp.getText();
+                            xpp.next();
+                            xpp.next();
+                            tag = xpp.getName();
+                        }
+
+                        if (tag.equals("AESKey")) {
+                            xpp.next();
+                            key = xpp.getText();
+                            encryptAlg = Constants.ENCRYPT_ALG.AES;
+                            xpp.next();
+                            xpp.next();
+                            tag = xpp.getName();
+                        }
+
+                        if (tag.equals("RSAKey")) {
+                            xpp.next();
+                            key = xpp.getText();
+                            encryptAlg = Constants.ENCRYPT_ALG.RSA;
+                            xpp.next();
+                            xpp.next();
+                            tag = xpp.getName();
+                        }
+
+                        if (tag.equals("hash")) {
+                            xpp.next();
+                            hash = xpp.getText();
+                            xpp.next();
+                            xpp.next();
+                            tag = xpp.getName();
+                        }
+
+                        if (tag.equals("host")) {
+                            xpp.next();
+                            host = xpp.getText();
+                            xpp.next();
+                            xpp.next();
+                            tag = xpp.getName();
+                        }
+
+                        if (tag.equals("hostBackup")) {
+                            xpp.next();
+                            hostBackup = xpp.getText();
+                            xpp.next();
+                            xpp.next();
+                            tag = xpp.getName();
+                        }
                     }
-
-                    if (tag == "AESKey") {
-                        key = xpp.getText();
-                        encryptAlg = Constants.ENCRYPT_ALG.AES;
-                    }
-
-                    if (tag == "RSAKey") {
-                        key = xpp.getText();
-                        encryptAlg = Constants.ENCRYPT_ALG.RSA;
-                    }
-
-                    if (tag == "hash") {
-                        hash = xpp.getText();
-                    }
-
-                    if (tag == "host") {
-                        host = xpp.getText();
-                    }
-
-                    if (tag == "hostBackup") {
-                        hostBackup = xpp.getText();
-                    }
-
                     NautilusKey nKey = new NautilusKey(fileName, key, encryptAlg, hash, host, hostBackup);
                     keysList.add(nKey);
                 }
-
                 eventType = xpp.next();
             }
 
@@ -113,8 +137,7 @@ public class NautilusKeyHandler {
 
     public void generateKeys(List<NautilusKey> keysList, String keyPath) {
         try {
-            //FileOutputStream fos = new  FileOutputStream(keyPath);
-            FileOutputStream fileos= context.openFileOutput(keyPath, Context.MODE_PRIVATE);
+            FileOutputStream fos = new  FileOutputStream(keyPath);
             XmlSerializer xmlSerializer = Xml.newSerializer();
             StringWriter writer = new StringWriter();
             xmlSerializer.setOutput(writer);
@@ -172,9 +195,8 @@ public class NautilusKeyHandler {
             xmlSerializer.endDocument();
             xmlSerializer.flush();
             String dataWrite = writer.toString();
-            fileos.write(dataWrite.getBytes());
-            fileos.close();
-
+            fos.write(dataWrite.getBytes());
+            fos.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
