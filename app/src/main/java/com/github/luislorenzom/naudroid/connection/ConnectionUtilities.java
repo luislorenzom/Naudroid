@@ -10,6 +10,8 @@ import com.github.luislorenzom.naudroid.util.Constants;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -180,6 +182,7 @@ public class ConnectionUtilities {
         return tmp[tmp.length - 1];
     }
 
+
     private byte[] readContentIntoByteArray(File file) {
         FileInputStream fileInputStream = null;
         byte[] bFile = new byte[(int) file.length()];
@@ -195,8 +198,35 @@ public class ConnectionUtilities {
         return bFile;
     }
 
-    private String getHashFromFile(File file, String algorithm) {
-        return null;
+
+    private static String convertByteArrayToHexString(byte[] arrayBytes) {
+        StringBuffer stringBuffer = new StringBuffer();
+        for (int i = 0; i < arrayBytes.length; i++) {
+            stringBuffer.append(Integer.toString((arrayBytes[i] & 0xff) + 0x100, 16)
+                    .substring(1));
+        }
+        return stringBuffer.toString();
     }
 
+
+    private String getHashFromFile(File file, String algorithm) {
+        try (FileInputStream inputStream = new FileInputStream(file)) {
+            // algorithm can be "MD5", "SHA-1", "SHA-256"
+            MessageDigest digest = MessageDigest.getInstance(algorithm);
+
+            byte[] bytesBuffer = new byte[1024];
+            int bytesRead = -1;
+
+            while ((bytesRead = inputStream.read(bytesBuffer)) != -1) {
+                digest.update(bytesBuffer, 0, bytesRead);
+            }
+
+            byte[] hashedBytes = digest.digest();
+
+            return convertByteArrayToHexString(hashedBytes);
+        } catch (NoSuchAlgorithmException | IOException ex) {
+            ex.printStackTrace();
+        }
+        return null;
+    }
 }
