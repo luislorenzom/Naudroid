@@ -31,7 +31,7 @@ public class FileUtilities {
 
     private RSAManager manager;
 
-    FileUtilities(Context context) {
+    public FileUtilities(Context context) {
         manager = new RSAManager(context);
     }
 
