@@ -13,6 +13,7 @@ public class QuotesDataSource {
     public static final String PREFERENCES_TABLE_NAME = "Preferences";
     public static final String SERVER_PREFERENCES_TABLE_NAME = "ServerPreferences";
     public static final String RSA_KEYS_TABLE_NAME = "RSAKeys";
+    public static final String MESSAGE_BUFFER_NAME = "BufferMessage";
 
     // Tipos de los campos
     public static final String STRING_TYPE = "text";
@@ -50,6 +51,12 @@ public class QuotesDataSource {
         public static final String PRIVATE_KEY = "private_key";
     }
 
+    // Campos de la tabla MessageBuffer
+    public static class ColumnMessageBuffer {
+        public static final String MESSAGE_ID = BaseColumns._ID;
+        public static final String SERVER_IP = "server_ip";
+        public static final String HASH = "hash";
+    }
 
     /* ------------- Scripts de creacion -------------------- */
 
@@ -69,6 +76,12 @@ public class QuotesDataSource {
                     ColumnRSAKeys.KEY_PAIR_ID + " " + INT_TYPE + " PRIMARY KEY AUTOINCREMENT," +
                     ColumnRSAKeys.PUBLIC_KEY + " " + STRING_TYPE + " NOT NULL," +
                     ColumnRSAKeys.PRIVATE_KEY + " " + STRING_TYPE + " NOT NULL)";
+
+    public static final String CREATE_MESSAGE_BUFFER_TABLE =
+            "CREATE TABLE " + MESSAGE_BUFFER_NAME + "(" +
+                ColumnMessageBuffer.MESSAGE_ID + " " + INT_TYPE + " PRIMARY KEY AUTOINCREMENT," +
+                ColumnMessageBuffer.SERVER_IP + " " + STRING_TYPE + " NOT NULL," +
+                ColumnMessageBuffer.HASH + " " + STRING_TYPE + " NOT NULL)";
 
     /* ------------- Scripts de inicializacion -------------------- */
 
