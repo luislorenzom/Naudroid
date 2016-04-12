@@ -70,7 +70,7 @@ public class RSAManager {
             key = kf.generatePublic(keySpec);
 
         } catch (Exception e) {
-            Log.e("errorTag", "Can't recovery the private key");
+            Log.e("errorTag", "Can't recovery the public key");
         }
         return key;
     }

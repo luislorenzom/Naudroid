@@ -19,6 +19,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
+import es.udc.fic.tic.nautilus.connection.NautilusMessage;
+
 /**
  * Created by Luis on 31/03/2016.
  */

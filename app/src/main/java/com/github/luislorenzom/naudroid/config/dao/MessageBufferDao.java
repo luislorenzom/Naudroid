@@ -60,6 +60,12 @@ public class MessageBufferDao {
         }
     }
 
+    public int messageCount() {
+        Cursor dataCount = database.rawQuery("select "+ QuotesDataSource.ColumnMessageBuffer.MESSAGE_ID
+                +" from " + QuotesDataSource.MESSAGE_BUFFER_NAME, null);
+        return dataCount.getCount();
+    }
+
     /*********************/
     /* PRIVATE FUNCTIONS */
     /*********************/
