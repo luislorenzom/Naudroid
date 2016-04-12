@@ -1,32 +1,35 @@
 package com.github.luislorenzom.naudroid;
 
+import android.app.ActionBar;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import com.github.luislorenzom.naudroid.client.FileUtilities;
-import com.github.luislorenzom.naudroid.client.KeyContainer;
-import com.github.luislorenzom.naudroid.config.NaudroidPreferences;
-import com.github.luislorenzom.naudroid.config.dao.KeyPairsDao;
-import com.github.luislorenzom.naudroid.config.dao.PreferencesDao;
-import com.github.luislorenzom.naudroid.config.dao.model.QuotesDataSource;
-import com.github.luislorenzom.naudroid.config.dao.model.QuotesReaderDbHelper;
-import com.github.luislorenzom.naudroid.connection.ConnectionUtilities;
-import com.github.luislorenzom.naudroid.connection.NautilusKey;
-import com.github.luislorenzom.naudroid.connection.NautilusKeyHandler;
-import com.github.luislorenzom.naudroid.util.Constants;
-import com.github.luislorenzom.naudroid.util.RSAManager;
 
-import java.io.File;
-import java.security.PrivateKey;
+import com.github.luislorenzom.naudroid.config.dao.MessageBufferDao;
+import com.github.luislorenzom.naudroid.config.dao.MessageBuffered;
+import com.github.luislorenzom.naudroid.config.dao.model.QuotesDataSource;
+import com.github.luislorenzom.naudroid.connection.ClientConnection;
+import com.github.luislorenzom.naudroid.util.RSAManager;
+import com.google.android.gms.appindexing.Action;
+import com.google.android.gms.appindexing.AppIndex;
+import com.google.android.gms.common.api.GoogleApiClient;
+
 import java.security.PublicKey;
-import java.util.ArrayList;
-import java.util.List;
+
+import es.udc.fic.tic.nautilus.connection.NautilusMessage;
 
 public class MainActivity extends ActionBarActivity {
+
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    private GoogleApiClient client;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,27 +40,17 @@ public class MainActivity extends ActionBarActivity {
             //Crear nuevo objeto QuotesDataSource
             //QuotesDataSource dataSource = new QuotesDataSource(this);
 
-            if (false) {
-                ConnectionUtilities connectionUtilities = new ConnectionUtilities(this);
-                connectionUtilities.prepareFileToSend("/storage/emulated/0/Download/photo.jpg", 0, null, null, null);
-            } else {
-
-                ConnectionUtilities connectionUtilities = new ConnectionUtilities(this);
-                List<File> files = new ArrayList<>();
-
-                files.add(new File("/storage/emulated/0/Download/photo.jpg.0.aes256"));
-                files.add(new File("/storage/emulated/0/Download/photo.jpg.1.aes256"));
-                files.add(new File("/storage/emulated/0/Download/photo.jpg.2.aes256"));
-
-                NautilusKeyHandler handler = new NautilusKeyHandler(this);
-                List<NautilusKey> keys = handler.getKey("/storage/emulated/0/keys/photo.jpg_key.xml");
-
-                connectionUtilities.restoreFile(files, keys);
+            RSAManager rsaManager = new RSAManager(this);
+            if (!(rsaManager.existsPair())) {
+                rsaManager.generateKeys();
             }
 
         } catch (Exception e) {
-           Log.e("errorTag",Log.getStackTraceString(e));
+            Log.e("errorTag", Log.getStackTraceString(e));
         }
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
 
     @Override
@@ -76,9 +69,58 @@ public class MainActivity extends ActionBarActivity {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            Intent intent = new Intent(this, Settings.class);
+            this.startActivity(intent);
             return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        client.connect();
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "Main Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app deep link URI is correct.
+                Uri.parse("android-app://com.github.luislorenzom.naudroid/http/host/path")
+        );
+        AppIndex.AppIndexApi.start(client, viewAction);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        Action viewAction = Action.newAction(
+                Action.TYPE_VIEW, // TODO: choose an action type.
+                "Main Page", // TODO: Define a title for the content shown.
+                // TODO: If you have web page content that matches this app activity's content,
+                // make sure this auto-generated web page URL is correct.
+                // Otherwise, set the URL to null.
+                Uri.parse("http://host/path"),
+                // TODO: Make sure this auto-generated app deep link URI is correct.
+                Uri.parse("android-app://com.github.luislorenzom.naudroid/http/host/path")
+        );
+        AppIndex.AppIndexApi.end(client, viewAction);
+        client.disconnect();
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        super.onPrepareOptionsMenu(menu);
+        menu.findItem(R.id.add).setVisible(false);
+        return true;
     }
 }

@@ -9,8 +9,22 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.github.luislorenzom.naudroid.MainActivity">
 
-    <TextView
+    <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hello World!" />
+        android:text="Save File"
+        android:id="@+id/button"
+        android:layout_marginBottom="179dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignStart="@+id/button2"
+        android:layout_alignEnd="@+id/button2" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Retrieval File"
+        android:id="@+id/button2"
+        android:layout_marginTop="68dp"
+        android:layout_alignTop="@+id/button"
+        android:layout_centerHorizontal="true" />
 </RelativeLayout>
