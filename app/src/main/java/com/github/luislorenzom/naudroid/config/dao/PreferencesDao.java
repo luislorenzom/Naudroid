@@ -27,7 +27,7 @@ public class PreferencesDao {
     public void updatePreferences(NaudroidPreferences preferences) {
 
         // Actualizamos los path de los directorios
-        if ((preferences.getSaveFilesPath() != null) && (preferences.getSaveKeysPath() != null)) {
+        if ((preferences.getSaveFilesPath() != null) || (preferences.getSaveKeysPath() != null)) {
             updatePreferencesTable(preferences.getSaveFilesPath(), preferences.getSaveKeysPath());
         }
 

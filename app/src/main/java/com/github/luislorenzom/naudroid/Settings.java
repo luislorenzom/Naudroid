@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Base64;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -14,6 +15,11 @@ import android.widget.Toast;
 
 import com.github.luislorenzom.naudroid.config.dao.PreferencesDao;
 import com.github.luislorenzom.naudroid.util.RSAManager;
+
+import net.rdrei.android.dirchooser.DirectoryChooserActivity;
+import net.rdrei.android.dirchooser.DirectoryChooserConfig;
+
+import java.io.File;
 
 public class Settings extends ActionBarActivity {
 
@@ -25,8 +31,13 @@ public class Settings extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
+        // Initialize preferenceDao y RSAManager
         PreferencesDao preferencesDao = new PreferencesDao(this);
         final RSAManager rsaManager = new RSAManager(this);
+
+        // Add the path to Files and Keys path
+        settings[0] = settings[0]+": "+preferencesDao.getPreference().getSaveFilesPath();
+        settings[1] = settings[1]+": "+preferencesDao.getPreference().getSaveKeysPath();
 
         // Link the listview with the xml
         list = (ListView)findViewById(R.id.listview);
@@ -40,11 +51,21 @@ public class Settings extends ActionBarActivity {
 
                 switch (position) {
                     case 0:
-                        Toast.makeText(getApplicationContext(), "Selected: " + position, Toast.LENGTH_SHORT).show();
+                        // Launch file navigator
+                        Intent intentZero = new Intent(Settings.this, FileNavigator.class);
+                        intentZero.putExtra("origin",0);
+                        intentZero.putExtra("filePath","/");
+                        finish();
+                        startActivity(intentZero);
                         break;
 
                     case 1:
-                        Toast.makeText(getApplicationContext(), "Selected: " + position, Toast.LENGTH_SHORT).show();
+                        // Launch file navigator
+                        Intent intentOne = new Intent(Settings.this, FileNavigator.class);
+                        intentOne.putExtra("origin",1);
+                        intentOne.putExtra("filePath","/");
+                        finish();
+                        startActivity(intentOne);
                         break;
 
                     case 2:
@@ -65,5 +86,4 @@ public class Settings extends ActionBarActivity {
             }
         });
     }
-
 }
