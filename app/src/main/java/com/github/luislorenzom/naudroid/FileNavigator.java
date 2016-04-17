@@ -10,6 +10,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.github.luislorenzom.naudroid.config.NaudroidPreferences;
 import com.github.luislorenzom.naudroid.config.dao.PreferencesDao;
@@ -22,6 +23,7 @@ public class FileNavigator extends ActionBarActivity {
 
     private ListView list;
     private String[] folders;
+    private int originKey;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,6 +32,7 @@ public class FileNavigator extends ActionBarActivity {
 
         // Get the origin parameter from the previous activity
         final int origin = (int) getIntent().getExtras().getSerializable("origin");
+        originKey = origin;
 
         // Set title
         if (origin == 0) {
@@ -40,6 +43,14 @@ public class FileNavigator extends ActionBarActivity {
             setTitle("Selecting the keys path");
         }
 
+        if (origin == 2) {
+            setTitle("Select file to save");
+        }
+
+        if (origin == 3) {
+            setTitle("Select key to retrieval");
+        }
+
         // Invoke the preferencesDao for save the new path
         final PreferencesDao preferencesDao = new PreferencesDao(this);
 
@@ -47,7 +58,7 @@ public class FileNavigator extends ActionBarActivity {
         final String filePath = (String) getIntent().getExtras().getSerializable("filePath");
 
         // Set the text path in the textView
-        TextView texViewPath = (TextView)findViewById(R.id.textView);
+        final TextView texViewPath = (TextView)findViewById(R.id.textView);
         texViewPath.setText(filePath);
 
         // Get all the writeables folders
@@ -60,9 +71,21 @@ public class FileNavigator extends ActionBarActivity {
             foldersList.add("go to parent folder");
         }
 
-        for (File file : files) {
-            if (file.canWrite() && file.isDirectory()) {
-                foldersList.add(file.getName());
+        // For save some folder
+        if ((origin == 0) || (origin == 1)) {
+            for (File file : files) {
+                if (file.canWrite() && file.isDirectory()) {
+                    foldersList.add(file.getName());
+                }
+            }
+        }
+
+        // For save some file
+        if ((origin == 2) || (origin == 3)) {
+            for (File file : files) {
+                if (file.canWrite()) {
+                    foldersList.add(file.getName());
+                }
             }
         }
 
@@ -89,12 +112,17 @@ public class FileNavigator extends ActionBarActivity {
                 } else {
                     // Go to child folder
                     File newFile = new File(filePath + "/" + folders[position]);
-                    String newPath = newFile.getAbsolutePath();
-                    Intent intent = new Intent(FileNavigator.this, FileNavigator.class);
-                    intent.putExtra("filePath", newPath);
-                    intent.putExtra("origin", origin);
-                    finish();
-                    startActivity(intent);
+                    // Check if the file is directory or not
+                    if (!(newFile.isDirectory())) {
+                        texViewPath.setText(newFile.getAbsolutePath());
+                    } else {
+                        String newPath = newFile.getAbsolutePath();
+                        Intent intent = new Intent(FileNavigator.this, FileNavigator.class);
+                        intent.putExtra("filePath", newPath);
+                        intent.putExtra("origin", origin);
+                        finish();
+                        startActivity(intent);
+                    }
                 }
             }
         });
@@ -105,20 +133,38 @@ public class FileNavigator extends ActionBarActivity {
             @Override
             public void onClick(View v) {
                 NaudroidPreferences preferences = null;
+                if (origin < 2) {
+                    if (origin == 0) {
+                        preferences = new NaudroidPreferences(filePath, null, null);
+                    }
 
-                if (origin == 0) {
-                    preferences = new NaudroidPreferences(filePath, null, null);
+                    if (origin == 1) {
+                        preferences = new NaudroidPreferences(null, filePath, null);
+                    }
+
+                    preferencesDao.updatePreferences(preferences);
+                    // now come back to settings activity
+                    Intent intent = new Intent(FileNavigator.this, Settings.class);
+                    finish();
+                    startActivity(intent);
+                } else {
+                    if (origin == 2) {
+                        // If select a file
+                        if (!(new File((String) texViewPath.getText()).isDirectory())) {
+                            Intent intent = new Intent(FileNavigator.this, PrepareFileToSend.class);
+                            intent.putExtra("filePath", texViewPath.getText());
+                            finish();
+                            startActivity(intent);
+                        } else {
+                        // If select a directory
+                            Toast.makeText(getApplicationContext(), "Can't upload a folder, select some file", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+
+                    if (origin == 3) {
+                        //llamar a la funcion de recuperar un fichero
+                    }
                 }
-
-                if (origin == 1) {
-                    preferences = new NaudroidPreferences(null, filePath, null);
-                }
-
-                preferencesDao.updatePreferences(preferences);
-                // now come back to settings activity
-                Intent intent = new Intent(FileNavigator.this, Settings.class);
-                finish();
-                startActivity(intent);
             }
         });
     }
@@ -126,8 +172,12 @@ public class FileNavigator extends ActionBarActivity {
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         // If back button is preassure then come back to settings
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
+        if ((keyCode == KeyEvent.KEYCODE_BACK) && (originKey <= 1)) {
             Intent intent = new Intent(FileNavigator.this, Settings.class);
+            finish();
+            startActivity(intent);
+        } else {
+            Intent intent = new Intent(FileNavigator.this, MainActivity.class);
             finish();
             startActivity(intent);
         }

@@ -118,7 +118,7 @@ public class ServersList extends ActionBarActivity {
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     String ip = input.getText().toString();
-                    // TODO: comprobar con una expresion regular que han introducido un direccion ip
+                    // check if the ip which receive is correct
                     if (!(ip.matches(ipRegExp))) {
                         Toast.makeText(getApplicationContext(), "server ip wrong :-(", Toast.LENGTH_SHORT).show();
                     } else {

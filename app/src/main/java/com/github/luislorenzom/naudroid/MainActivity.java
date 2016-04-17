@@ -8,6 +8,8 @@ import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 
 
 import com.github.luislorenzom.naudroid.config.dao.MessageBufferDao;
@@ -18,6 +20,8 @@ import com.github.luislorenzom.naudroid.util.RSAManager;
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.api.GoogleApiClient;
+
+import org.bitlet.weupnp.Main;
 
 import java.security.PublicKey;
 
@@ -44,6 +48,33 @@ public class MainActivity extends ActionBarActivity {
             if (!(rsaManager.existsPair())) {
                 rsaManager.generateKeys();
             }
+
+            // Save Button
+            final Button saveButton = (Button) findViewById(R.id.button);
+            saveButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent intent = new Intent(MainActivity.this, FileNavigator.class);
+                    intent.putExtra("origin",2);
+                    intent.putExtra("filePath","/");
+                    startActivity(intent);
+                }
+            });
+
+
+            // Retrieval Button
+            final Button retrievalButton = (Button) findViewById(R.id.button2);
+            retrievalButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Intent anotherIntent = new Intent(MainActivity.this, FileNavigator.class);
+                    anotherIntent.putExtra("origin",3);
+                    anotherIntent.putExtra("filePath","/");
+                    startActivity(anotherIntent);
+                }
+            });
+
+
 
         } catch (Exception e) {
             Log.e("errorTag", Log.getStackTraceString(e));
