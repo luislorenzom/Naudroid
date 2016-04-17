@@ -16,11 +16,6 @@ import android.widget.Toast;
 import com.github.luislorenzom.naudroid.config.dao.PreferencesDao;
 import com.github.luislorenzom.naudroid.util.RSAManager;
 
-import net.rdrei.android.dirchooser.DirectoryChooserActivity;
-import net.rdrei.android.dirchooser.DirectoryChooserConfig;
-
-import java.io.File;
-
 public class Settings extends ActionBarActivity {
 
     private ListView list;

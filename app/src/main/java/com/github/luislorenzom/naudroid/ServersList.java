@@ -2,12 +2,10 @@ package com.github.luislorenzom.naudroid;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.text.InputType;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
@@ -16,7 +14,6 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import com.github.luislorenzom.naudroid.R;
 import com.github.luislorenzom.naudroid.config.NaudroidPreferences;
 import com.github.luislorenzom.naudroid.config.dao.PreferencesDao;
 

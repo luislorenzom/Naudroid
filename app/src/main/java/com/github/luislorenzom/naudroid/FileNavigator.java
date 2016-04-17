@@ -33,7 +33,7 @@ public class FileNavigator extends ActionBarActivity {
 
         // Set title
         if (origin == 0) {
-            setTitle("selecting the files path");
+            setTitle("Selecting the files path");
         }
 
         if (origin == 1) {
@@ -54,6 +54,12 @@ public class FileNavigator extends ActionBarActivity {
         final File folder = new File(filePath);
         File[] files = folder.listFiles();
         List<String> foldersList = new ArrayList<>();
+
+        // Check if we are in the main folder to add the "go to parent folder" option
+        if (!(filePath.equals("/"))) {
+            foldersList.add("go to parent folder");
+        }
+
         for (File file : files) {
             if (file.canWrite() && file.isDirectory()) {
                 foldersList.add(file.getName());
@@ -70,13 +76,26 @@ public class FileNavigator extends ActionBarActivity {
         list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                File newFile = new File(filePath + "/" +folders[position]);
-                String newPath = newFile.getAbsolutePath();
-                Intent intent =  new Intent(FileNavigator.this, FileNavigator.class);
-                intent.putExtra("filePath", newPath);
-                intent.putExtra("origin", origin);
-                finish();
-                startActivity(intent);
+
+                if ((position == 0) && (folders[position].equals("go to parent folder"))) {
+                    // Go to parent folder
+                    File tmpFile = new File(filePath);
+                    String newPath = tmpFile.getParent();
+                    Intent intent =  new Intent(FileNavigator.this, FileNavigator.class);
+                    intent.putExtra("filePath", newPath);
+                    intent.putExtra("origin", origin);
+                    finish();
+                    startActivity(intent);
+                } else {
+                    // Go to child folder
+                    File newFile = new File(filePath + "/" + folders[position]);
+                    String newPath = newFile.getAbsolutePath();
+                    Intent intent = new Intent(FileNavigator.this, FileNavigator.class);
+                    intent.putExtra("filePath", newPath);
+                    intent.putExtra("origin", origin);
+                    finish();
+                    startActivity(intent);
+                }
             }
         });
 
