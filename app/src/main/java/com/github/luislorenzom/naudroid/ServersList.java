@@ -24,6 +24,7 @@ public class ServersList extends ActionBarActivity {
     private ListView list;
     private String[] servers;
     private PreferencesDao preferencesDao;
+    private String ipRegExp = "\\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\b";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -118,15 +119,20 @@ public class ServersList extends ActionBarActivity {
                 public void onClick(DialogInterface dialog, int which) {
                     String ip = input.getText().toString();
                     // TODO: comprobar con una expresion regular que han introducido un direccion ip
-                    // Save the ip
-                    List<String> newServers = preferencesDao.getPreference().getServerPreferences();
-                    newServers.add(ip);
-                    preferencesDao.updatePreferences(new NaudroidPreferences(null, null, newServers));
+                    if (!(ip.matches(ipRegExp))) {
+                        Toast.makeText(getApplicationContext(), "server ip wrong :-(", Toast.LENGTH_SHORT).show();
+                    } else {
+                        //---
+                        // Save the ip
+                        List<String> newServers = preferencesDao.getPreference().getServerPreferences();
+                        newServers.add(ip);
+                        preferencesDao.updatePreferences(new NaudroidPreferences(null, null, newServers));
 
-                    Toast.makeText(getApplicationContext(), "server added", Toast.LENGTH_SHORT).show();
-                    // Refresh the listview
-                    finish();
-                    startActivity(getIntent());
+                        Toast.makeText(getApplicationContext(), "server added", Toast.LENGTH_SHORT).show();
+                        // Refresh the listview
+                        finish();
+                        startActivity(getIntent());
+                    }
                 }
             });
             builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
