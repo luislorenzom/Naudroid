@@ -152,6 +152,7 @@ public class MainActivity extends ActionBarActivity {
     public boolean onPrepareOptionsMenu(Menu menu) {
         super.onPrepareOptionsMenu(menu);
         menu.findItem(R.id.add).setVisible(false);
+        menu.findItem(R.id.save).setVisible(false);
         return true;
     }
 }

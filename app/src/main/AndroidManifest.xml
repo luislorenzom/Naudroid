@@ -36,7 +36,7 @@
             android:name=".ServersList"
             android:label="@string/title_activity_servers_list" />
         <activity android:name=".FileNavigator" />
-        <activity android:name=".PrepareFileToSend"></activity>
+        <activity android:name=".PrepareFileToSend" />
     </application>
 
 </manifest>

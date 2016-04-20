@@ -61,4 +61,5 @@
 
     <string name="pref_title_vibrate">Vibrate</string>
     <string name="title_activity_servers_list">ServersList</string>
+    <string name="title_activity_prueba">Settings</string>
 </resources>
