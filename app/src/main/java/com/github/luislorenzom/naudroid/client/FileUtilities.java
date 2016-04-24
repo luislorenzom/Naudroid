@@ -121,7 +121,7 @@ public class FileUtilities {
         switch (algorithm) {
             case RSA:
                 // Decrypt with RSA
-                //decryptWithRSA(filePath, key);
+                decryptWithRSA(filePath, key);
                 break;
 
             case AES:

@@ -5,6 +5,7 @@ import android.util.Log;
 
 import com.github.luislorenzom.naudroid.config.dao.MessageBufferDao;
 import com.github.luislorenzom.naudroid.config.dao.MessageBuffered;
+import com.github.luislorenzom.naudroid.config.dao.PreferencesDao;
 import com.github.luislorenzom.naudroid.util.RSAManager;
 
 import net.tomp2p.connection.Bindings;
@@ -24,6 +25,7 @@ import java.io.ObjectOutputStream;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.security.PublicKey;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.List;
@@ -40,9 +42,11 @@ public class ClientConnection {
     private MessageBufferDao messageBufferDao;
     private ConnectionUtilities connectionUtilities;
     private NautilusKeyHandler keysHandler;
+    private PreferencesDao preferencesDao;
 
     public ClientConnection(Context context) {
         rsaManager = new RSAManager(context);
+        preferencesDao = new PreferencesDao(context);
         messageBufferDao = new MessageBufferDao(context);
         connectionUtilities = new ConnectionUtilities(context);
         keysHandler = new NautilusKeyHandler(context);
@@ -62,8 +66,8 @@ public class ClientConnection {
             try {
                 pkey = rsaManager.getPublicKey();
             } catch (Exception e) {
-                System.err.println("Can't recovery the public key, check the argument");
-                System.exit(0);
+                Log.e("errorTag", "Can't recovery the public key, check the argument");
+                //System.exit(0);
             }
         }
 
@@ -72,9 +76,8 @@ public class ClientConnection {
                 downloadLimit, dateLimit, dateRelease, pkey);
 
 
-        //List<NautilusKey> nautilusKey = keysHandler.getKeys(new File(filePath).getName()+"_key.xml");
-        //TODO: borrar
-        List<NautilusKey> nautilusKey = null;
+        List<NautilusKey> nautilusKey = keysHandler.getKey(preferencesDao.getPreference().getSaveKeysPath()
+                + "/" + new File(filePath).getName() + "_key.xml");
         int index = 0;
 
         for (NautilusMessage msg : msgs) {
@@ -82,7 +85,7 @@ public class ClientConnection {
             List<String> serverPreferences = connectionUtilities.getHostAndBackupFromConfig();
             for (String host : serverPreferences) {
                 //String host = serverPreferences.get(0);
-                System.out.println("Save the file");
+                Log.e("NaudroidInfo", "Save the file");
 
                 // Make three intends
                 int result = 0;
@@ -92,13 +95,11 @@ public class ClientConnection {
                     if (result == 1) {
                         break;
                     }
-                    //TODO: añadir un wait en cada uno de los
-                    //intentos para dar un margen de tiempo?
                 }
 
                 if (result == 1) {
                     clean = false;
-                    System.out.println("ok!");
+                    Log.e("NaudroidInfo", "ok!");
                     // Save the host in the key file
                     nautilusKey.get(index).setHost(host);
 
@@ -114,7 +115,7 @@ public class ClientConnection {
                         int tmpIndex = 0;
                         for (String hostBackup : serverPreferences) {
                             if (hostBackup != host) {
-                                System.out.println("Mirroring the file");
+                                Log.e("NaudroidInfo", "Mirroring the file");
 
                                 // Make three intends
                                 int resultMirroring = 0;
@@ -128,7 +129,7 @@ public class ClientConnection {
 
                                 if (resultMirroring == 1) {
                                     // Success, now save the hostBackup in the keyFile
-                                    System.out.println("ok!");
+                                    Log.e("NaudroidInfo", "ok!");
                                     nautilusKey.get(index).setHostBackup(hostBackup);
                                     break;
                                 }
@@ -149,19 +150,113 @@ public class ClientConnection {
             if (clean) {
                 // if can't sent an file split then delete the
                 // key and the encrypt files
-                System.out.println("Can't sent one file split. Cleaning the tmp files");
+                Log.e("NaudroidInfo", "Can't sent one file split. Cleaning the tmp files");
                 cleanAllTmpFile(filePath);
-                System.exit(0);
+                //System.exit(0);
             }
 
             index++;
         }
-        //keysHandler.generateKeys(nautilusKey);
-
+        String keyPath = preferencesDao.getPreference().getSaveKeysPath()
+                + "/" + new File(filePath).getName() + "_key.xml";
+        keysHandler.generateKeys(nautilusKey, keyPath);
     }
 
     public void getFileFromKey(String keyPath) {
+        String filesPath = preferencesDao.getPreference().getSaveFilesPath()
+                + "/";
+        List<NautilusKey> keys = keysHandler.getKey(keyPath);
+        List<File> filesJoin = new ArrayList<File>();
 
+        for (NautilusKey key : keys) {
+            NautilusMessage msg = new NautilusMessage(0, key.getHash());
+
+            // Make three intends
+            int result = 0;
+            for (int j = 0; j < 3; j++) {
+                result = startClient(key.getHost(), msg);
+
+                if (result >= 1) {
+                    break;
+                }
+            }
+
+            if (result >= 1) {
+                File file = new File(filesPath + key.getHash() +".aes256");
+                File newFile = new File(filesPath + key.getFileName());
+                file.renameTo(newFile);
+
+                file.delete();
+                filesJoin.add(newFile);
+
+				/* Sync the file (with the backup), only if is necessary */
+                if (result == 2) {
+                    int resultSync = syncDownloadLimit(key.getHostBackup(), key.getHash());
+                    if (resultSync != 1) {
+                        // Fail the message
+                        MessageBuffered msgSync = new MessageBuffered(null, key.getHostBackup(), key.getHash());
+                        messageBufferDao.setMessageIntoBuffer(msgSync);
+                    }
+                }
+
+				/* Sync the rest */
+                if (messageBufferDao.anyMessage()) {
+                    syncAllBuffer();
+                }
+
+            } else {
+                // Make the petition to the backup host
+                if (key.getHostBackup() != null) {
+
+                    // Make three intends
+                    int secondResult = 0;
+                    for (int j = 0; j < 3; j++) {
+                        secondResult = startClient(key.getHostBackup(), msg);
+
+                        if (secondResult >= 1) {
+                            break;
+                        }
+                    }
+
+                    if (secondResult >= 1) {
+                        File file = new File(filesPath + key.getHash()+".aes256");
+                        File newFile = new File(filesPath + key.getFileName());
+                        file.renameTo(newFile);
+
+                        file.delete();
+                        filesJoin.add(newFile);
+
+                        /* Sync the file (with the original host), only if is necessary */
+                        if (secondResult == 2) {
+                            int resultSync = syncDownloadLimit(key.getHost(), key.getHash());
+                            if (resultSync != 1) {
+                                // Fail the message
+                                MessageBuffered msgSync = new MessageBuffered(null, key.getHost(), key.getHash());
+                                messageBufferDao.setMessageIntoBuffer(msgSync);
+                            }
+                        }
+
+                        /* Now sync the rest */
+                        if (messageBufferDao.anyMessage()) {
+                            syncAllBuffer();
+                        }
+
+                    } else {
+                        Log.e("ErrorTag", "Can't recovery the file");
+                        //TODO: REVISAR
+                        deleteFilesToJoin(filesJoin);
+                        //System.exit(0);
+                    }
+                } else {
+                    Log.e("ErrorTag", "Can't recovery the file");
+                    deleteFilesToJoin(filesJoin);
+                    //System.exit(0);
+                }
+
+            }
+        }
+        // Decrypt and join the file's part
+        connectionUtilities.restoreFile(filesJoin, keys);
     }
 
     /*********************/
@@ -170,7 +265,7 @@ public class ClientConnection {
 
     private int startClient(String ipAddress, NautilusMessage msgObject) {
         try {
-            System.out.println("Sending... "+msgObject.getHash()+"--->"+ipAddress);
+            Log.e("NaudroidInfo", "Sending... " + msgObject.getHash() + "--->" + ipAddress);
             Random rnd = new Random(42L);
             Bindings b = new Bindings().listenAny();
             Peer client = new PeerBuilder(new Number160(rnd)).ports(4001).bindings(b).start();
@@ -193,7 +288,7 @@ public class ClientConnection {
             futureBootstrap.awaitUninterruptibly();
 
             Collection<PeerAddress> addressList = client.peerBean().peerMap().all();
-            System.out.println("=====> "+addressList.size());
+            Log.e("NaudroidInfo", "=====> " + addressList.size());
 
             // if can not connect with the server
             if (addressList.size() == 0) {
@@ -210,19 +305,19 @@ public class ClientConnection {
 
 
             if (futureDiscover.isSuccess()) {
-                System.out.println("found that my outside address is " + futureDiscover.peerAddress());
+                Log.e("NaudroidInfo", "found that my outside address is " + futureDiscover.peerAddress());
             } else {
                 // Send the file without problem!
-                System.out.println("failed 1 " + futureDiscover.failedReason());
+                Log.e("ErrorTag", "failed 1 " + futureDiscover.failedReason());
             }
 
             PeerAddress peerA = addressList.iterator().next();
 
             byte[] msg = objectToByteArray(msgObject);
 
-            //---
+            // --------------------------------------------------------------
             if (msgObject.getType() == 2) {
-                System.out.println("=====> Synchronizing "+msgObject.getHash());
+                Log.e("NaudroidInfo", "=====> Synchronizing " + msgObject.getHash());
                 // Send and logic to process msg type two
                 FutureDirect future = client.sendDirect(peerA).object(msg).start();
 
@@ -232,22 +327,22 @@ public class ClientConnection {
                     int val = (int) future.object();
 
                     if (val == 1) {
-                        System.out.println("Success in the synchronization!");
+                        Log.e("NaudroidInfo", "Success in the synchronization!");
                         client.shutdown();
                         return 1;
                     } else {
-                        System.out.println("Some problem has been happened in the synchronization");
+                        Log.e("ErrorTag", "Some problem has been happened in the synchronization");
                         client.shutdown();
                         return -1;
                     }
 
                 } else {
-                    System.out.println("failed in synchronization: " + future.failedReason());
+                    Log.e("ErrorTag", "failed in synchronization: " + future.failedReason());
                 }
 
             }
-            //---
 
+            // --------------------------------------------------------------
             if (msgObject.getType() == 1) {
                 // Send and logic to process msg type one
                 FutureDirect future = client.sendDirect(peerA).object(msg).start();
@@ -256,26 +351,27 @@ public class ClientConnection {
 
                 if (future.isSuccess()) {
 
-                    System.out.println("=====> receiving message");
+                    Log.e("NaudroidInfo", "=====> receiving message");
                     int val = (int) future.object();
                     if (val == 1) {
                         // Success!!
-                        System.out.println("=====> File part correctly sent");
+                        Log.e("NaudroidInfo", "=====> File part correctly sent");
                         client.shutdown();
                         return val;
                     } else {
                         // Fail in the server (can't save for space, permits, doesn't find, etc)
-                        System.out.println("=====> has been some error in the server");
+                        Log.e("ErrorTag", "=====> has been some error in the server");
                         client.shutdown();
-                        System.out.println("=====> Reason: " + printError(val));
+                        Log.e("ErrorTag", "=====> Reason: " + printError(val));
                         return -1;
                     }
 
                 } else {
-                    System.out.println("failed 2 " + future.failedReason());
+                    Log.e("ErrorTag", "failed 2 " + future.failedReason());
                 }
             }
 
+            // --------------------------------------------------------------
             if (msgObject.getType() == 0) {
                 // Send and logic to process msg type zero
                 FutureDirect future = client.sendDirect(peerA).object(msg).start();
@@ -283,16 +379,16 @@ public class ClientConnection {
                 future.awaitUninterruptibly();
 
                 if (future.isSuccess()) {
-                    System.out.println("=====> receiving message");
+                    Log.e("NaudroidInfo", "=====> receiving message");
                     try{
                         NautilusMessage response = (NautilusMessage) future.object();
                         byte[] byteArray = response.getContent();
-
-                        FileOutputStream fos = new FileOutputStream(msgObject.getHash()+".aes256");
+                        FileOutputStream fos = new FileOutputStream(preferencesDao.getPreference()
+                                .getSaveFilesPath() + "/" +msgObject.getHash()+".aes256");
                         fos.write(byteArray);
                         fos.close();
 
-                        System.out.println("=====> File part recovered");
+                        Log.e("NaudroidInfo", "=====> File part recovered");
                         client.shutdown();
                         if (response.getSynchronize()) {
                             return 2;
@@ -300,35 +396,13 @@ public class ClientConnection {
                             return 1;
                         }
                     } catch (Exception e) {
-                        System.out.println("=====> has been some error in the server");
+                        Log.e("ErrorTag", "=====> has been some error in the server");
                         client.shutdown();
                         return -1;
                     }
 
                 } else {
-                    System.out.println("failed 3 " + future.failedReason());
-                }
-            }
-            // --------------------------------------------------------------
-            if (msgObject.getType() == 3) {
-                FutureDirect future = client.sendDirect(peerA).object(msg).start();
-
-                future.awaitUninterruptibly();
-
-                if (future.isSuccess()) {
-                    //System.out.println("=====> receiving message");
-                    try{
-                        String response = (String) future.object();
-                        Log.e("ok", response);
-                        client.shutdown();
-                        return 1;
-                    } catch (Exception e) {
-                        client.shutdown();
-                        return -1;
-                    }
-
-                } else {
-                    Log.e("failed", future.failedReason());
+                    Log.e("ErrorTag", "failed 3 " + future.failedReason());
                 }
             }
             // --------------------------------------------------------------
@@ -336,8 +410,8 @@ public class ClientConnection {
             client.shutdown();
             return -1;
         } catch (Exception e) {
-            //System.out.println("Can't find the host");
-            Log.e("no host", Log.getStackTraceString(e));
+            Log.e("ErrorTag", "Can't find the host");
+            Log.e("ErrorTag", Log.getStackTraceString(e));
             return -1;
         }
     }
@@ -353,18 +427,19 @@ public class ClientConnection {
 
 
     private void cleanAllTmpFile(String filePath) {
-      /*  List<NautilusKey> nautilusKey = keysHandler.getKeys(new File(filePath).getName()+"_key.xml");
+        String keyPath = preferencesDao.getPreference().getSaveKeysPath()
+                +"/"+ new File(filePath).getName()+"_key.xml";
+        List<NautilusKey> nautilusKey = keysHandler.getKey(keyPath);
 
         // Delete the keyFile
-        String fileKey = (new File(filePath).getName()) + "_key.xml";
-        new File(fileKey).delete();
+        new File(keyPath).delete();
 
         // Delete the encrypt files
         String parentPath = new File(filePath).getParent();
 
         for (NautilusKey key : nautilusKey) {
             new File(parentPath + "/" +key.getFileName()).delete();
-        } */
+        }
     }
 
 
@@ -389,11 +464,30 @@ public class ClientConnection {
                             element.getHash()));
                 }
             } catch (Exception e) {
-                System.err.println("Has been happened some error in the synchronized");
+                Log.e("ErrorTag", "Has been happened some error in the synchronized");
             }
         }
     }
 
+    private int syncDownloadLimit(String ipAddress, String hash) {
+        //Prepare the message
+        NautilusMessage msgObject = new NautilusMessage(2, hash);
+        try {
+            //Sending the message
+            int result = startClient(ipAddress, msgObject);
+            if (result >= 1) {
+                //Correct!
+                Log.e("NaudroidInfo", hash+" corretly synchronized");
+                return 1;
+            } else {
+                // Some fail
+                Log.e("ErrorTag", "Error in synchronization");
+                return -1;
+            }
+        } catch (Exception e) {
+            return -1;
+        }
+    }
 
     private String printError(int val) {
         switch (val) {

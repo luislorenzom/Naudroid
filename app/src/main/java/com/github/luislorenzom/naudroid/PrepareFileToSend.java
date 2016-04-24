@@ -1,6 +1,7 @@
 package com.github.luislorenzom.naudroid;
 
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
@@ -172,31 +173,31 @@ public class PrepareFileToSend extends ActionBarActivity {
 
         if (id == R.id.save) {
             // File path
-            String filePath = parameters[0];
-            int downloadLimit;
-            Calendar dateLimit;
-            Calendar dateRelease;
-            String publicKey;
+            final String filePath = parameters[0];
+            final int downloadLimit;
+            final Calendar dateLimit;
+            final Calendar dateRelease;
+            final String publicKey;
 
             // Download Limit
             String downloadLimitString = parameters[1].split(":")[1];
-            if (downloadLimitString == " ") {
+            if (downloadLimitString.equals(" ")) {
                 downloadLimit = -1;
             } else {
-                downloadLimit = Integer.parseInt(downloadLimitString);
+                downloadLimit = Integer.parseInt(downloadLimitString.substring(1));
             }
 
             // Date limit
             String dateLimitString = parameters[2].split(":")[1];
-            if (dateLimitString == " ") {
+            if (dateLimitString.equals(" ")) {
                 dateLimit = null;
             } else {
-                dateLimit = stringToCalendar(dateLimitString);
+                dateLimit = stringToCalendar(dateLimitString.substring(1));
             }
 
             // Date release
             String dateReleaseString = parameters[3].split(":")[1];
-            if (dateReleaseString == " ") {
+            if (dateReleaseString.equals(" ")) {
                 dateRelease = null;
             } else {
                 dateRelease = stringToCalendar(dateReleaseString);
@@ -206,15 +207,30 @@ public class PrepareFileToSend extends ActionBarActivity {
             boolean usePublicKey = Boolean.parseBoolean(parameters[4].split(":")[1]);
             if (usePublicKey) {
                 KeyPairsDao keyPairsDao =  new KeyPairsDao(this);
+                // en vez de recibir el string mandar a la subrutina el objeto PublicKey
                 publicKey = keyPairsDao.getKeyPair().getPublicKey();
             } else {
                 publicKey = null;
             }
 
-            // Send the petition to clientConnection
-            ClientConnection clientConnection =  new ClientConnection(this);
-            // TODO: lanzar una ventana de cargando o una barra de carga
-            clientConnection.saveFileInNetwork(filePath, downloadLimit, dateLimit, dateRelease, publicKey);
+            final ProgressDialog progress = ProgressDialog.show(PrepareFileToSend.this, "Retrieving file",
+                    "Conneting with the servers, wait a minute", true);
+
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    // Send the petition to clientConnection
+                    ClientConnection clientConnection =  new ClientConnection(PrepareFileToSend.this);
+                    clientConnection.saveFileInNetwork(filePath, downloadLimit, dateLimit, dateRelease, publicKey);
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            progress.dismiss();
+                        }
+                    });
+                }
+            });
         }
         return super.onOptionsItemSelected(item);
     }

@@ -1,5 +1,6 @@
 package com.github.luislorenzom.naudroid;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
@@ -14,6 +15,9 @@ import android.widget.Toast;
 
 import com.github.luislorenzom.naudroid.config.NaudroidPreferences;
 import com.github.luislorenzom.naudroid.config.dao.PreferencesDao;
+import com.github.luislorenzom.naudroid.connection.ClientConnection;
+import com.github.luislorenzom.naudroid.connection.NautilusKey;
+import com.github.luislorenzom.naudroid.connection.NautilusKeyHandler;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -156,13 +160,47 @@ public class FileNavigator extends ActionBarActivity {
                             finish();
                             startActivity(intent);
                         } else {
-                        // If select a directory
+                            // If select a directory
                             Toast.makeText(getApplicationContext(), "Can't upload a folder, select some file", Toast.LENGTH_SHORT).show();
                         }
                     }
 
                     if (origin == 3) {
-                        //llamar a la funcion de recuperar un fichero
+                        // Check if is a xml file
+                        String fileName = new File((String) texViewPath.getText()).getName();
+                        int fileNameLength = fileName.length();
+
+                        if (fileName.substring(fileNameLength - 4, fileNameLength).equals(".xml")) {
+                            // Check if the file is a correct key
+                            NautilusKeyHandler nautilusKeyHandler = new NautilusKeyHandler(FileNavigator.this);
+                            List<NautilusKey> keys = nautilusKeyHandler.getKey((String) texViewPath.getText());
+
+                            if (keys.size() > 0) {
+                                // Launch loading screen
+                                final ProgressDialog progress = ProgressDialog.show(FileNavigator.this, "Retrieving file",
+                                        "Conneting with the servers, wait a minute", true);
+
+                                new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        ClientConnection clientConnection =  new ClientConnection(FileNavigator.this);
+                                        clientConnection.getFileFromKey((String) texViewPath.getText());
+                                        runOnUiThread(new Runnable() {
+                                            @Override
+                                            public void run() {
+                                                progress.dismiss();
+                                            }
+                                        });
+                                    }
+                                });
+
+                            } else {
+                                Toast.makeText(getApplicationContext(), "Can't get the keys from this file", Toast.LENGTH_SHORT).show();
+                            }
+
+                        } else {
+                            Toast.makeText(getApplicationContext(), "Can't get the keys from this file format", Toast.LENGTH_SHORT).show();
+                        }
                     }
                 }
             }
