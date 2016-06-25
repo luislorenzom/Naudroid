@@ -180,7 +180,7 @@ public class FileNavigator extends ActionBarActivity {
                                 final ProgressDialog progress = ProgressDialog.show(FileNavigator.this, "Retrieving file",
                                         "Conneting with the servers, wait a minute", true);
 
-                                new Thread(new Runnable() {
+                                Thread t = new Thread(new Runnable() {
                                     @Override
                                     public void run() {
                                         ClientConnection clientConnection =  new ClientConnection(FileNavigator.this);
@@ -193,6 +193,8 @@ public class FileNavigator extends ActionBarActivity {
                                         });
                                     }
                                 });
+
+                                t.start();
 
                             } else {
                                 Toast.makeText(getApplicationContext(), "Can't get the keys from this file", Toast.LENGTH_SHORT).show();

@@ -213,10 +213,10 @@ public class PrepareFileToSend extends ActionBarActivity {
                 publicKey = null;
             }
 
-            final ProgressDialog progress = ProgressDialog.show(PrepareFileToSend.this, "Retrieving file",
+            final ProgressDialog progress = ProgressDialog.show(PrepareFileToSend.this, "Saving file",
                     "Conneting with the servers, wait a minute", true);
 
-            new Thread(new Runnable() {
+            Thread t = new Thread(new Runnable() {
                 @Override
                 public void run() {
                     // Send the petition to clientConnection
@@ -231,6 +231,10 @@ public class PrepareFileToSend extends ActionBarActivity {
                     });
                 }
             });
+
+            t.start();
+
+
         }
         return super.onOptionsItemSelected(item);
     }

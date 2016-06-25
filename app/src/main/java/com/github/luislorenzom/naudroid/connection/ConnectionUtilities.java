@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -96,8 +97,20 @@ public class ConnectionUtilities {
                 keysList.add(nKey);
 
                 // Generate a message
-                NautilusMessage msg = new NautilusMessage(1, hash, readContentIntoByteArray(encryptFile),
-                        downloadLimit, dateLimit, releaseDate);
+                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+                String dateLimitString = null;
+                String releaseDateString = null;
+
+                if (dateLimit != null) {
+                    dateLimitString = sdf.format(dateLimit.getTime());
+                }
+
+                if (releaseDate != null) {
+                    releaseDateString = sdf.format(releaseDate.getTime());
+                }
+
+                NautilusMessage msg = new NautilusMessage(dateLimitString, releaseDateString, 3, hash,
+                        readContentIntoByteArray(encryptFile), downloadLimit);
 
                 // Add the new message to the messageList
                 msgs.add(msg);

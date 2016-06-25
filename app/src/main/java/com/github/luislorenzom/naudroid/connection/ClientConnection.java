@@ -343,7 +343,7 @@ public class ClientConnection {
             }
 
             // --------------------------------------------------------------
-            if (msgObject.getType() == 1) {
+            if (msgObject.getType() == 3) {
                 // Send and logic to process msg type one
                 FutureDirect future = client.sendDirect(peerA).object(msg).start();
 
